@@ -98,13 +98,6 @@ class LPF(Filter):
         self.tfunc = lambda s : 1/zeroMultiplierFuncGenerator(self.poles,s)
         self.implemented = True
 
-    def implementChebyshevTypeII(self):
-        self.FilterType = "Chebyshev Type II"
-        self.degree = ceil(acosh(sqrt((1 / self.stopBandPowerGain - 1) / (1 / self.passBandPowerGain - 1))) / acosh(self.stopBandFrequency / self.passBandFrequency))
-        eps = 0.5 * ((1/(1 / self.stopBandPowerGain - 1)) + (1/(1 /self.passBandPowerGain - 1)) / (ChebyshevPolynomial(self.degree, self.stopBandFrequency / self.passBandFrequency) ** 2))
-        for i in range(0,self.degree):
-            self.zeroes.append(self.stopBandFrequency*cos((2*i - 1)*pi/(2*self.degree))/(eps*2*pi))
-        print(self.zeroes)
 
     def getTransferFunction(self):
         return self.tfunc
