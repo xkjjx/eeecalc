@@ -1,7 +1,7 @@
 from numpy.linalg import solve as linearSolve
 from math import sqrt,fabs,e
 import numpy as np
-def secondOrderDifferentialEquationSolver(a,b,c,x0=0,dxodt=0):
+def secondOrderExponetialDifferentialEquationSolver(a,b,c,x0=0,dxodt=0):
     """
     x'' + a x' + b x = c
     :param a: coefficient of the first derivative term
