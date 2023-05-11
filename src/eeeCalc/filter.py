@@ -18,12 +18,24 @@ def polarComplex(m,th):
     return complex(m*cos(th),m*sin(th))
 
 def zeroMultiplierFuncGenerator(poles,s):
+    """
+    :param poles: list of values s1,s2,s3,...
+    :param s: point where output needs to be evaluated
+    :return: value of (1 + s/s1)(1 + s/s2)(1 + s/s3)...
+    """
     outP = 1
     for pole in poles:
         outP *= (1+s/pole)
     return outP
 
 class Filter:
+    """
+    initializes the abstract filter class,
+    parent of the four different types of filter -
+    lowpass, highpass, bandpass, bandstop
+    ASSUMES SYMMETRIC PASSBAND AND STOPBAND GAIN FOR BANDPASS/BANDSTOP FILTERS,
+    THUS USE STRICTEST AND FASTEST DROPOFF
+    """
     passBandGainDB = 0
     stopBaandGainDB = -20
     degree = 0
@@ -46,6 +58,13 @@ class Filter:
 
 
 class LPF(Filter):
+    """
+    LOWPASS FILTER CLASS:
+    first set it's pasband frequency, stopband frequency, stopband gain, passband gain
+    before calling the implementChebyshevTypeI() or implementButterworth() methods
+    more implementations will be supported soon
+    after implementation, poles, zeroes, and transfer functions can be requested
+    """
     def __init__(self,passBandGain,stopBandGain,passBandFrequency,stopBandFrequency,DB=True,kHz=False,power=False):
         if(stopBandGain >= passBandGain):
             raise ValueError("Passband gain has to be higher than stopband gain")
