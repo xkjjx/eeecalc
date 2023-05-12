@@ -37,23 +37,41 @@ class Filter:
     THUS USE STRICTEST AND FASTEST DROPOFF
     """
     passBandGainDB = 0
-    stopBaandGainDB = -20
+    stopBandGainDB = -20
+    passBandPowerGain = 1
+    stopBandPowerGain = 0.01
     degree = 0
     poles = []
     zeroes = []
     implemented = False
     FilterType = ""
-    def tfunc(s):
-        return
+    transferFunction = None
     def __init__(self):
         pass
-    def __init__(self,passBandGain,stopBandGain,DB=True):
+    def __init__(self,passBandGain,stopBandGain,DB=True,power=True):
+
         if (stopBandGain >= passBandGain):
             raise ValueError("Passband gain has to be higher than stopband gain")
-        self.passBandGainDB = passBandGain
-        self.stopBandGainDB = stopBandGain
-    def setPassBandGain(self,passBandGain,DB=True):
-        self.passBandGainDB = passBandGain
+
+        if DB:
+            self.passBandGainDB = passBandGain
+            self.passBandPowerGain = dBToPowRatio(self.passBandGainDB)
+            self.stopBandGainDB = stopBandGain
+            self.stopBandPowerGain = dBToPowRatio(self.stopBandGainDB)
+        else:
+            self.passBandGainDB = powRatioToDB(passBandGain) * 2**(not power)
+
+            if power:
+                self.passBandPowerGain = passBandGain
+            else:
+                self.passBandPowerGain = sqrt(passBandGain)
+
+            self.stopBandGainDB = powRatioToDB(stopBandGain) * 2**(not power)
+
+            if power:
+                self.stopBandPowerGain = stopBandGain
+            else:
+                self.stopBandPowerGain = sqrt(stopBandGain)
 
 
 
@@ -65,17 +83,14 @@ class LPF(Filter):
     more implementations will be supported soon
     after implementation, poles, zeroes, and transfer functions can be requested
     """
-    def __init__(self,passBandGain,stopBandGain,passBandFrequency,stopBandFrequency,DB=True,kHz=False,power=False):
-        if(stopBandGain >= passBandGain):
-            raise ValueError("Passband gain has to be higher than stopband gain")
+    def __init__(self, passBandGain, stopBandGain, passBandFrequency, stopBandFrequency, DB=True, kHz=False,power=True):
+        super().__init__(passBandGain,stopBandGain,DB,power)
+
         if (passBandFrequency >= stopBandFrequency):
             raise ValueError("Passband frequency has to be lower than stopband frequency in a LPF")
-        self.passBandGainDB = passBandGain
-        self.passBandPowerGain = dBToPowRatio(self.passBandGainDB)
-        self.stopBandGainDB = stopBandGain
-        self.stopBandPowerGain = dBToPowRatio(self.stopBandGainDB)
-        self.passBandFrequency = passBandFrequency
-        self.stopBandFrequency = stopBandFrequency
+
+        self.passBandFrequency = passBandFrequency * (1000)**kHz
+        self.stopBandFrequency = stopBandFrequency * (1000)**kHz
 
     def implementButterworth(self):
         self.FilterType = "Butterworth"
@@ -83,7 +98,7 @@ class LPF(Filter):
         f3 = 0.5*((self.passBandFrequency)/(1/self.passBandPowerGain - 1)**(1/(2*self.degree)) + ((self.stopBandFrequency)/(1/self.stopBandPowerGain - 1)**(1/(2*self.degree))))
         for i in range(self.degree):
             self.poles.append(polarComplex(2*pi*f3,pi/(2*self.degree) + pi*i/self.degree + pi/2))
-        self.tfunc = lambda s: 1/zeroMultiplierFuncGenerator(self.poles,s)
+        self.transferFunction = lambda s: 1 / zeroMultiplierFuncGenerator(self.poles, s)
         self.implemented = True
 
     def implementChebyshevTypeI(self):
@@ -95,12 +110,12 @@ class LPF(Filter):
             x = complex(2*pi*self.passBandFrequency*sin((2*i - 1)*pi/(2*self.degree))*sinh(z),2*pi*self.passBandFrequency*cos((2*i - 1)*pi/(2*self.degree))*cosh(z))
             if(fabs(pol(x)[1]) >= pi/2):
                 self.poles.append(x)
-        self.tfunc = lambda s : 1/zeroMultiplierFuncGenerator(self.poles,s)
+        self.transferFunction = lambda s : 1 / zeroMultiplierFuncGenerator(self.poles, s)
         self.implemented = True
 
 
     def getTransferFunction(self):
-        return self.tfunc
+        return self.transferFunction
 
     def getDegree(self):
         return self.degree
